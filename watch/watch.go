@@ -44,7 +44,7 @@ func Watch(key string, rev int64, recursive bool) (*watchChan, error) {
 	}
 	go wc.Run()
 
-	time.Sleep(20 * time.Second)
+	time.Sleep(60 * time.Second)
 
 	return wc, nil
 }
@@ -56,7 +56,7 @@ func (wc *watchChan) Run() {
 
 	// var resultChanWG sync.WaitGroup
 	// resultChanWG.Add(1)
-	time.Sleep(20 * time.Second)
+	time.Sleep(60 * time.Second)
 	wc.cancel()
 }
 
@@ -71,8 +71,8 @@ func (wc *watchChan) Stop() {
 
 func (wc *watchChan) StartWatching(watchClosedCh chan struct{}) {
 	log.Println("Start watching")
-
-	opts := []clientv3.OpOption{clientv3.WithRev(wc.initialRev)}
+	// WithPrevKV will store the previous revision and value, it's must be setted.
+	opts := []clientv3.OpOption{clientv3.WithRev(wc.initialRev), clientv3.WithPrevKV()}
 	if wc.recursive {
 		opts = append(opts, clientv3.WithPrefix())
 	}
@@ -89,8 +89,10 @@ func (wc *watchChan) StartWatching(watchClosedCh chan struct{}) {
 		// }
 
 		for _, e := range wres.Events {
-			log.Println(e)
-			log.Println("Event received! %s executed on %q with value %q\n", e.Type, e.Kv.Key, e.Kv.Value)
+			log.Printf("Event received! %s executed on %q with value %q\n", e.Type, e.Kv.Key, e.Kv.Value)
+			log.Printf("The revision is %d", e.Kv.ModRevision)
+			etcdEvent,_ := toETCDEvent(e)
+			log.Println(etcdEvent)
 		}
 	}
 }
