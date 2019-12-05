@@ -4,15 +4,23 @@ import (
 	"go.etcd.io/etcd/clientv3"
 	"context"
 	"strings"
+	"sync"
 	"time"
 	"log"
 	"cachee/client"
+	"cachee/cache"
 )
+
+const (
+	// We have set a buffer in order to reduce times of context switches.
+	etcdEventChanBufSize = 100
+	cacheEventChanBufSize = 100
+)
+
 
 type Interface interface {
 	Stop()
-	
-	// ResultChan() <-chan Event
+	ResultChan() <-chan cache.CacheEvent
 }
 
 
@@ -23,6 +31,9 @@ type watchChan struct {
 	recursive bool
 	ctx context.Context
 	cancel context.CancelFunc
+	etcdEventChan chan *etcdEvent
+	cacheEventChan chan cache.CacheEvent
+	errChan chan error
 }
 
 
@@ -41,6 +52,9 @@ func Watch(key string, rev int64, recursive bool) (*watchChan, error) {
 		initialRev: rev,
 		ctx: ctx,
 		cancel: cancel,
+		etcdEventChan: make(chan *etcdEvent, etcdEventChanBufSize),
+		cacheEventChan: make(chan cache.CacheEvent, cacheEventChanBufSize),
+		errChan: make(chan error, 1)
 	}
 	go wc.Run()
 
@@ -54,9 +68,19 @@ func (wc *watchChan) Run() {
 	log.Println("Start run")
 	go wc.StartWatching(watchClosedCh)
 
-	// var resultChanWG sync.WaitGroup
-	// resultChanWG.Add(1)
-	time.Sleep(60 * time.Second)
+	var resultChanWG sync.WaitGroup
+	resultChanWG.Add(1)
+	go wc.processEvent(&resultChanWG)
+
+	select {
+	case err := <-wc.errChan:
+		if err == context.Canceled {
+			break
+		}
+	case <- watchClosedCh:
+	case <-wc.ctx.Done():
+	}
+
 	wc.cancel()
 }
 
@@ -93,6 +117,26 @@ func (wc *watchChan) StartWatching(watchClosedCh chan struct{}) {
 			log.Printf("The revision is %d", e.Kv.ModRevision)
 			etcdEvent,_ := toETCDEvent(e)
 			log.Println(etcdEvent)
+		}
+	}
+}
+
+
+func (wc *watchChan) processEvent(wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for {
+		select {
+		case e := <-wc.etcdEventChan:
+			res: cache.ToCacheEvent(e)
+			select {
+			case wc.cacheEventChan <- *res:
+			case <-wc.ctx.Done():
+				return
+			}
+		
+		case <-wc.ctx.Done():
+			return 
 		}
 	}
 }
