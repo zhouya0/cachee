@@ -4,14 +4,14 @@ import (
 	"cachee/config"
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
 	"go.etcd.io/etcd/clientv3"
-	"time"
+	"io/ioutil"
 	"log"
+	"time"
 )
 
 // GetETCDClient will return the etcd client with https certificates.
-func GetETCDClient() *clientv3.Client{
+func GetETCDClient() *clientv3.Client {
 	var c config.Config
 	config := c.GetConfig()
 

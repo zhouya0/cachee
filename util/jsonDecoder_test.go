@@ -3,6 +3,7 @@ package util
 import (
 	"testing"
 )
+
 func TestDecode(t *testing.T) {
 	testJSON := []byte(`
 	{

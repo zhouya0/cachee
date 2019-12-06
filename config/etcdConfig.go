@@ -1,19 +1,19 @@
 package config
 
 import (
-	"os"
-	"log"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"log"
+	"os"
 	"path"
 	"path/filepath"
 )
 
 type Config struct {
-	CAPath string `yaml:"caPath"`
+	CAPath   string `yaml:"caPath"`
 	CertPath string `yaml:"certPath"`
-	KeyPath string `yaml:"keyPath"`
-	Server string `yaml:"server"`
+	KeyPath  string `yaml:"keyPath"`
+	Server   string `yaml:"server"`
 }
 
 func (c *Config) GetConfig() *Config {
@@ -30,4 +30,4 @@ func (c *Config) GetConfig() *Config {
 		log.Fatal(err)
 	}
 	return c
-} 
+}

@@ -1,3 +1,3 @@
 package cache
 
-type Object interface {}
+type Object interface{}
