@@ -1,3 +1,3 @@
 package cache
 
-type Object struct {}
+type Object interface {}

@@ -5,10 +5,7 @@ import (
 	"context"
 	"strings"
 	"sync"
-	"time"
 	"log"
-	"cachee/client"
-	"cachee/cache"
 )
 
 const (
@@ -20,7 +17,7 @@ const (
 
 type Interface interface {
 	Stop()
-	ResultChan() <-chan cache.CacheEvent
+	ResultChan() <-chan CacheEvent
 }
 
 
@@ -32,18 +29,15 @@ type watchChan struct {
 	ctx context.Context
 	cancel context.CancelFunc
 	etcdEventChan chan *etcdEvent
-	cacheEventChan chan cache.CacheEvent
+	cacheEventChan chan CacheEvent
 	errChan chan error
 }
 
 
-func Watch(key string, rev int64, recursive bool) (*watchChan, error) {
+func Watch(etcdClient *clientv3.Client, key string, rev int64, recursive bool) (*watchChan, error) {
 	if recursive && !strings.HasSuffix(key, "/") {
 		key += "/"
 	}
-	etcdClient := client.GetETCDClient()
-
-	defer etcdClient.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	wc := &watchChan{
@@ -53,19 +47,16 @@ func Watch(key string, rev int64, recursive bool) (*watchChan, error) {
 		ctx: ctx,
 		cancel: cancel,
 		etcdEventChan: make(chan *etcdEvent, etcdEventChanBufSize),
-		cacheEventChan: make(chan cache.CacheEvent, cacheEventChanBufSize),
-		errChan: make(chan error, 1)
+		cacheEventChan: make(chan CacheEvent, cacheEventChanBufSize),
+		errChan: make(chan error, 1),
 	}
 	go wc.Run()
-
-	time.Sleep(60 * time.Second)
 
 	return wc, nil
 }
 
 func (wc *watchChan) Run() {
 	watchClosedCh := make(chan struct{})
-	log.Println("Start run")
 	go wc.StartWatching(watchClosedCh)
 
 	var resultChanWG sync.WaitGroup
@@ -82,6 +73,8 @@ func (wc *watchChan) Run() {
 	}
 
 	wc.cancel()
+	resultChanWG.Wait()
+	close(wc.cacheEventChan)
 }
 
 
@@ -89,9 +82,9 @@ func (wc *watchChan) Stop() {
 	wc.cancel()
 }
 
-// func (wc *watchChan) ResultChan() {
-// 	return wc.resultChan
-// }
+func (wc *watchChan) ResultChan() <-chan CacheEvent{
+ 	return wc.cacheEventChan
+}
 
 func (wc *watchChan) StartWatching(watchClosedCh chan struct{}) {
 	log.Println("Start watching")
@@ -103,22 +96,24 @@ func (wc *watchChan) StartWatching(watchClosedCh chan struct{}) {
 
 	wch := wc.client.Watch(wc.ctx, wc.key, opts...)
 
-
 	for wres := range wch {
-		// if wres.Err() != nil {
-		// 	err := wres.Err()
-		// 	log.Fatal("watch chan error: %v", err)
-		// 	wc.sendError(err)
-		// 	return 
-		// }
+		if wres.Err() != nil {
+			err := wres.Err()
+			log.Fatal("watch chan error: %v", err)
+			wc.sendError(err)
+			return 
+		}
 
 		for _, e := range wres.Events {
 			log.Printf("Event received! %s executed on %q with value %q\n", e.Type, e.Kv.Key, e.Kv.Value)
 			log.Printf("The revision is %d", e.Kv.ModRevision)
 			etcdEvent,_ := toETCDEvent(e)
 			log.Println(etcdEvent)
+			wc.sendETCDEvent(etcdEvent)
 		}
 	}
+
+	close(watchClosedCh)
 }
 
 
@@ -126,9 +121,10 @@ func (wc *watchChan) processEvent(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	for {
+		log.Println("precocess running!")
 		select {
 		case e := <-wc.etcdEventChan:
-			res: cache.ToCacheEvent(e)
+			res := toCacheEvent(e)
 			select {
 			case wc.cacheEventChan <- *res:
 			case <-wc.ctx.Done():
@@ -138,5 +134,23 @@ func (wc *watchChan) processEvent(wg *sync.WaitGroup) {
 		case <-wc.ctx.Done():
 			return 
 		}
+	}
+}
+
+func (wc *watchChan)sendETCDEvent(e *etcdEvent) {
+	if len(wc.etcdEventChan) == etcdEventChanBufSize {
+		log.Printf("etcd event chan buffer size %d is not enough!", etcdEventChanBufSize)
+	}
+
+	select {
+	case wc.etcdEventChan <- e:
+	case <-wc.ctx.Done():
+	}
+}
+
+func (wc *watchChan)sendError(err error) {
+	select {
+	case wc.errChan <- err:
+	case <-wc.ctx.Done():
 	}
 }

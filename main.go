@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"cachee/watch"
+	"cachee/client"
+	"time"
 )
 
 // // /registry/v1/namespace/puckel
@@ -11,6 +13,14 @@ func main() {
 
 	log.Println("Cachee started!")
 
-	watch.Watch("/registry/v1/namespaces/test", 0, false)
+	etcdClient := client.GetETCDClient()
 
+	defer etcdClient.Close()
+
+	watchChan,_ := watch.Watch(etcdClient, "/registry/v1/namespaces/test", 0, false)
+
+	for res := range watchChan.ResultChan() {
+		log.Println(res)
+	}
+	time.Sleep(3 * time.Second)
 }
