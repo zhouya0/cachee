@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
-	"cachee/watch"
 	"cachee/client"
+	"cachee/watch"
+	"log"
 	"time"
 )
 
@@ -17,7 +17,7 @@ func main() {
 
 	defer etcdClient.Close()
 
-	watchChan,_ := watch.Watch(etcdClient, "/registry/v1/namespaces/test", 0, false)
+	watchChan, _ := watch.Watch(etcdClient, "/registry/v1/namespaces/test", 0, false)
 
 	for res := range watchChan.ResultChan() {
 		log.Println(res)
