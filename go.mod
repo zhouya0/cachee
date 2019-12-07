@@ -11,13 +11,12 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/btree v1.0.0 // indirect
-	github.com/google/uuid v1.1.1 // indirect
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/websocket v1.4.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.12.1 // indirect
 	github.com/jonboulle/clockwork v0.1.0 // indirect
-	github.com/json-iterator/go v1.1.8 // indirect
 	github.com/prometheus/client_golang v1.2.1 // indirect
 	github.com/soheilhy/cmux v0.1.4 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20190109142713-0ad062ec5ee5 // indirect
@@ -27,8 +26,10 @@ require (
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	google.golang.org/genproto v0.0.0-20191203220235-3fa9dbf08042 // indirect
 	google.golang.org/grpc v1.25.1 // indirect
-	gopkg.in/yaml.v2 v2.2.3
-	sigs.k8s.io/yaml v1.1.0 // indirect
+	gopkg.in/yaml.v2 v2.2.4
+	k8s.io/apimachinery v0.0.0-20191203211716-adc6f4cd9e7d // indirect
+	k8s.io/client-go v11.0.0+incompatible
+	k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6 // indirect
 )
 
 replace github.com/coreos/go-systemd/journal => /Users/yao/go-workspace/src/github.com/go-systemd/journal

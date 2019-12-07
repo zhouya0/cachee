@@ -1,7 +1,7 @@
 package watch
 
 import (
-	"cachee/cache"
+	"cachee/meta"
 	"cachee/util"
 )
 
@@ -18,7 +18,7 @@ const (
 
 type CacheEvent struct {
 	Type   EventType
-	Object cache.Object
+	Object meta.Object
 }
 
 func toCacheEvent(e *etcdEvent) (c *CacheEvent) {
@@ -47,13 +47,14 @@ func toCacheEvent(e *etcdEvent) (c *CacheEvent) {
 	return c
 }
 
-func prepareObjs(e *etcdEvent) (curObj cache.Object, oldObj cache.Object, err error) {
+func prepareObjs(e *etcdEvent) (curObj meta.Object, oldObj meta.Object, err error) {
 	if !e.isDeleted {
-		curObj, _ = util.GetTestObject(e.value)
+		// curObj, _ = util.GetTestObject(e.value)
+		curObj = util.NewKeyVersionObject(e.value, e.rev, e.key)
 	}
 
 	if len(e.preValue) > 0 {
-		oldObj, _ = util.GetTestObject(e.preValue)
+		oldObj = util.NewKeyVersionObject(e.preValue, e.rev, e.key)
 	}
 
 	return curObj, oldObj, nil

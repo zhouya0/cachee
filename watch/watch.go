@@ -41,6 +41,7 @@ func Watch(etcdClient *clientv3.Client, key string, rev int64, recursive bool) (
 		client:         etcdClient,
 		key:            key,
 		initialRev:     rev,
+		recursive:      recursive,
 		ctx:            ctx,
 		cancel:         cancel,
 		etcdEventChan:  make(chan *etcdEvent, etcdEventChanBufSize),
@@ -101,10 +102,9 @@ func (wc *watchChan) StartWatching(watchClosedCh chan struct{}) {
 		}
 
 		for _, e := range wres.Events {
-			log.Printf("Event received! %s executed on %q with value %q\n", e.Type, e.Kv.Key, e.Kv.Value)
+			log.Printf("Event received! %s executed on %q with value %q\n", e.Type, e.Kv.Key, string(e.Kv.Value))
 			log.Printf("The revision is %d", e.Kv.ModRevision)
 			etcdEvent, _ := toETCDEvent(e)
-			log.Println(etcdEvent)
 			wc.sendETCDEvent(etcdEvent)
 		}
 	}

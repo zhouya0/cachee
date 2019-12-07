@@ -1,3 +1,3 @@
-package cache
+package meta
 
 type Object interface{}
