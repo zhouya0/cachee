@@ -1,4 +1,4 @@
-package util
+package meta
 
 type KeyVersionObject struct {
 	Data    []byte

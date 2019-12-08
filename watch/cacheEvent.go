@@ -2,7 +2,6 @@ package watch
 
 import (
 	"cachee/meta"
-	"cachee/util"
 )
 
 type EventType string
@@ -50,11 +49,11 @@ func toCacheEvent(e *etcdEvent) (c *CacheEvent) {
 func prepareObjs(e *etcdEvent) (curObj meta.Object, oldObj meta.Object, err error) {
 	if !e.isDeleted {
 		// curObj, _ = util.GetTestObject(e.value)
-		curObj = util.NewKeyVersionObject(e.value, e.rev, e.key)
+		curObj = meta.NewKeyVersionObject(e.value, e.rev, e.key)
 	}
 
 	if len(e.preValue) > 0 {
-		oldObj = util.NewKeyVersionObject(e.preValue, e.rev, e.key)
+		oldObj = meta.NewKeyVersionObject(e.preValue, e.rev, e.key)
 	}
 
 	return curObj, oldObj, nil
