@@ -10,7 +10,7 @@ import (
 	"go.etcd.io/etcd/clientv3"
 )
 
-func List(etcdClient *clientv3.Client, key string, rev int64, recursive bool) []CacheEvent {
+func List(etcdClient *clientv3.Client, key string, rev int64, recursive bool) ([]CacheEvent, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	if recursive && !strings.HasSuffix(key, "/") {
@@ -36,5 +36,5 @@ func List(etcdClient *clientv3.Client, key string, rev int64, recursive bool) []
 		}
 		objects = append(objects, cacheEvent)
 	}
-	return objects
+	return objects, err
 }
