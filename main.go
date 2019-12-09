@@ -2,9 +2,8 @@ package main
 
 import (
 	"cachee/cache"
-	"cachee/client"
-	"cachee/watch"
-	"log"
+	"cachee/util"
+	"fmt"
 	"time"
 )
 
@@ -12,27 +11,35 @@ import (
 // ssh 10.6.170.191
 
 func main() {
-	log.Println("Cachee started!")
+	// log.Println("Cachee started!")
 
-	etcdClient := client.GetETCDClient()
+	// etcdClient := client.GetETCDClient()
 
-	c := cache.NewCache()
+	// c := cache.NewCache()
 
-	defer etcdClient.Close()
+	// defer etcdClient.Close()
 
-	watchChan, _ := watch.Watch(etcdClient, "/registry/v1/namespaces", 0, true)
+	// watchChan, _ := watch.Watch(etcdClient, "/registry/v1/namespaces", 0, true)
 
-	for res := range watchChan.ResultChan() {
-		log.Println(res)
-		if res.Type == watch.Added {
-			c.Add(res)
-		} else if res.Type == watch.Modified {
-			c.Update(res)
-		} else if res.Type == watch.Deleted {
-			c.Delete(res)
-		}
-		log.Println(c.ListKeys())
-		log.Println(c.List())
+	// for res := range watchChan.ResultChan() {
+	// 	log.Println(res)
+	// 	if res.Type == watch.Added {
+	// 		c.Add(res)
+	// 	} else if res.Type == watch.Modified {
+	// 		c.Update(res)
+	// 	} else if res.Type == watch.Deleted {
+	// 		c.Delete(res)
+	// 	}
+	// 	log.Println(c.ListKeys())
+	// 	log.Println(c.List())
+	// }
+	// time.Sleep(3 * time.Second)
+	c := cache.ListWatch("/registry/v1/namespaces")
+	for {
+		fmt.Println("============================Cache DATA")
+		objects := c.List()
+		util.PrintKeyVersionObjects(objects)
+		fmt.Println("============================")
+		time.Sleep(3 * time.Second)
 	}
-	time.Sleep(3 * time.Second)
 }

@@ -10,7 +10,7 @@ import (
 	"go.etcd.io/etcd/clientv3"
 )
 
-func List(etcdClient *clientv3.Client, key string, rev int64, recursive bool) []meta.Object {
+func List(etcdClient *clientv3.Client, key string, rev int64, recursive bool) []CacheEvent {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	if recursive && !strings.HasSuffix(key, "/") {
@@ -25,11 +25,16 @@ func List(etcdClient *clientv3.Client, key string, rev int64, recursive bool) []
 		log.Fatal(err)
 	}
 	version := items.Header.Revision
-	var objects []meta.Object
+	var objects []CacheEvent
 	for _, ev := range items.Kvs {
 		fmt.Printf("%s : %s\n", ev.Key, ev.Value)
 		object := meta.NewKeyVersionObject(ev.Value, version, string(ev.Key))
-		objects = append(objects, object)
+		cacheEvent := CacheEvent{
+			// Can this work? Would it cause any problems?
+			Type:   Added,
+			Object: object,
+		}
+		objects = append(objects, cacheEvent)
 	}
 	return objects
 }
