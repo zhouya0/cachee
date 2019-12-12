@@ -5,12 +5,12 @@ import (
 )
 
 type TestObject struct {
-	RegistryName string `json:"registry_name"`
-	Name         string `json:"name"`
+	RegistryName string      `json:"registry_name"`
+	Name         interface{} `json:"name"`
 }
 
 func GetTestObject(data []byte) (TestObject, error) {
 	var t TestObject
-	json.Unmarshal(data, &t)
-	return t, nil
+	err := json.Unmarshal(data, &t)
+	return t, err
 }

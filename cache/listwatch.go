@@ -31,6 +31,8 @@ func NewListWatchCache(key string) *listWatchCache {
 // 1. List -> Cache
 // 2. Watch -> Cache
 func ListWatch(key string) *Cache {
+	// TODO rerun watch case the connection is refused
+	// See staging/src/k8s.io/client-go/tools/cache/reflector.go L326
 	l := NewListWatchCache(key)
 	err := l.fillCacheWithList()
 	if err != nil {
