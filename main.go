@@ -2,7 +2,6 @@ package main
 
 import (
 	"cachee/cache"
-	"cachee/util"
 	"fmt"
 	"time"
 )
@@ -15,7 +14,8 @@ func main() {
 	for {
 		fmt.Println("============================Cache DATA")
 		objects := c.List()
-		util.PrintKeyVersionObjects(objects)
+		//util.PrintKeyVersionObjects(objects)
+		fmt.Println(objects)
 		fmt.Println("============================")
 		time.Sleep(3 * time.Second)
 	}
